@@ -1,0 +1,36 @@
+name: smate
+description: "A new Flutter project."
+publish_to: 'none' # private project
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Sensors and GPS
+  geolocator: ^10.1.0
+  sensors_plus: ^4.0.2
+
+  # Text-to-speech
+  flutter_tts: ^3.8.3
+
+  # Firebase core + auth + database + storage (compatible with Flutter 3.11)
+  firebase_core: ^2.19.0
+  firebase_auth: ^4.6.0
+  cloud_firestore: ^4.9.0
+  firebase_storage: ^11.6.5
+
+  # Cupertino icons for iOS style
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
