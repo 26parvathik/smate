@@ -1,30 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'login_screen.dart';
+
+import 'splash_screen.dart';
 
 void main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const SmateApp());
+  await Firebase.initializeApp();
+
+  runApp(const SteerMateApp());
+
 }
 
-class SmateApp extends StatelessWidget {
-  const SmateApp({Key? key}) : super(key: key);
+class SteerMateApp extends StatelessWidget {
+
+  const SteerMateApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+
     return MaterialApp(
+
       debugShowCheckedModeBanner: false,
-      title: 'SteerMate',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        brightness: Brightness.dark,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: const LoginScreen(),
+      title: "SteerMate",
+
+      theme: ThemeData.dark(),
+
+      home: const SplashScreen(),
+
     );
   }
 }
