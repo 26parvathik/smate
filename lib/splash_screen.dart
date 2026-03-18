@@ -43,21 +43,28 @@ class _SplashScreenState extends State<SplashScreen> {
 
             children: const [
 
-              Icon(
-                Icons.directions_car,
-                size: 120,
-                color: Colors.greenAccent,
-              ),
-
-              SizedBox(height: 20),
-
               Text(
-                "STEERMATE",
+                "SteerMate",
                 style: TextStyle(
                   fontSize: 42,
                   fontWeight: FontWeight.bold,
+                  fontStyle: FontStyle.italic,
                   letterSpacing: 3,
-                  color: Colors.greenAccent,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: Colors.white,
+                      blurRadius: 20,
+                    ),
+                    Shadow(
+                      color: Colors.blueAccent,
+                      blurRadius: 30,
+                    ),
+                    Shadow(
+                      color: Colors.lightBlueAccent,
+                      blurRadius: 50,
+                    ),
+                  ],
                 ),
               ),
 

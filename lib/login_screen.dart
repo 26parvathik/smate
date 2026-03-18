@@ -70,30 +70,38 @@ class _LoginScreenState extends State<LoginScreen> {
 
             children: [
 
-              const Icon(
-                Icons.directions_car,
-                size: 100,
-                color: Colors.greenAccent,
-              ),
-
-              const SizedBox(height: 20),
-
               const Text(
-                "STEERMATE",
+                "Welcome",
                 style: TextStyle(
-                  fontSize: 36,
+                  fontSize: 38,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 3,
                   color: Colors.white,
                 ),
               ),
 
-              const SizedBox(height: 50),
+              const SizedBox(height: 30),
 
               TextField(
                 controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: "Email",
+                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  hintText: "E-mail",
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFF2C0B5A), width: 2),
+                  ),
                 ),
               ),
 
@@ -102,19 +110,47 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 controller: passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: "Password",
+                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+                decoration: InputDecoration(
+                  hintText: "Password",
+                  hintStyle: const TextStyle(color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Color(0xFF2C0B5A), width: 2),
+                  ),
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 30),
 
-              ElevatedButton(
-                onPressed: login,
-                child: const Text("Login"),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF450C84),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  child: const Text("Login"),
+                ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
 
               TextButton(
                 onPressed: () {
@@ -125,8 +161,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   );
                 },
-                child: const Text("Create New Account"),
-              )
+                child: const Text(
+                  "Don’t have an account? Sign Up",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
 
             ],
           ),
