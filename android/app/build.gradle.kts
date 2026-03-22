@@ -46,6 +46,11 @@ android {
         versionName = flutter.versionName
     }
 
+    // Prevent compression of TFLite model files (required for memory-mapping)
+    aaptOptions {
+        noCompress("tflite")
+    }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")

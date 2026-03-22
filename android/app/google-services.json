@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "366404433530",
+    "project_id": "steermate-736dd",
+    "storage_bucket": "steermate-736dd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:366404433530:android:7d429b13943d3af23bedc3",
+        "android_client_info": {
+          "package_name": "com.example.smate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaNNKugWPMJYI_LrJHqj3i9rAFjUIJfas"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
