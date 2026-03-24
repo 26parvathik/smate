@@ -44,6 +44,9 @@ class _DrivingScreenState extends State<DrivingScreen> {
   bool harshLock = false;
   bool overspeedLock = false;
 
+  DateTime? _harshEventStartTime;
+  DateTime _lastAlertTime = DateTime.fromMillisecondsSinceEpoch(0);
+
   // ── Camera + Detection ──
   CameraController? _cameraController;
   bool _cameraReady = false;
@@ -55,17 +58,13 @@ class _DrivingScreenState extends State<DrivingScreen> {
   @override
   void initState() {
     super.initState();
-    _initCameraAndModel();
+    // Load TFLite model immediately so it's ready
+    _tfliteService.loadModel().catchError((e) {
+      debugPrint('Failed to load TFLite model: $e');
+    });
   }
 
-  Future<void> _initCameraAndModel() async {
-    // Load TFLite model
-    try {
-      await _tfliteService.loadModel();
-    } catch (e) {
-      debugPrint('Failed to load TFLite model: $e');
-    }
-
+  Future<void> _initCamera() async {
     // Initialize camera
     try {
       final cameras = await availableCameras();
@@ -97,6 +96,13 @@ class _DrivingScreenState extends State<DrivingScreen> {
     } catch (e) {
       debugPrint('Camera init error: $e');
     }
+  }
+
+  void _disposeCamera() {
+    _cameraController?.stopImageStream();
+    _cameraController?.dispose();
+    _cameraController = null;
+    _cameraReady = false;
   }
 
   // Throttle detection to run max twice per second
@@ -223,7 +229,12 @@ class _DrivingScreenState extends State<DrivingScreen> {
 
     setState(() {
       tripRunning = true;
+      harshBrakeCount = 0;
+      overspeedCount = 0;
+      _detectedSign = '';
     });
+
+    await _initCamera(); // Start camera for the trip
 
     positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
@@ -254,27 +265,57 @@ class _DrivingScreenState extends State<DrivingScreen> {
       }
     });
 
-    accelStream = accelerometerEventStream().listen((event) {
+    accelStream = userAccelerometerEventStream().listen((event) {
       double magnitude = sqrt(
         event.x * event.x +
         event.y * event.y +
         event.z * event.z,
       );
 
-      if (magnitude < 7) {
-        if (!harshLock) {
-          harshBrakeCount++;
-          harshLock = true;
-          tts.speak("Harsh braking detected");
-        }
-        setState(() {
-          harshBraking = true;
-        });
-      } else {
-        harshLock = false;
+      final now = DateTime.now();
+
+      // 1. Moving constraint: Speed must be >= 8 km/h
+      if (speed < 8.0) {
+        _harshEventStartTime = null;
         setState(() {
           harshBraking = false;
         });
+        return;
+      }
+
+      // 2. Cooldown constraint: 2 seconds between alerts
+      if (now.difference(_lastAlertTime).inSeconds < 2) {
+        _harshEventStartTime = null;
+        return;
+      }
+
+      // 3. Trigger Condition: Magnitude > 4.0 m/s²
+      if (magnitude > 4.0) {
+        // Start timing the duration
+        _harshEventStartTime ??= now;
+
+        // 4. Duration constraint: Must be sustained for at least 500ms
+        if (now.difference(_harshEventStartTime!).inMilliseconds >= 500) {
+          harshBrakeCount++;
+          _lastAlertTime = now;
+          _harshEventStartTime = null; // Reset for next detection
+          
+          tts.speak("Harsh braking detected");
+          
+          setState(() {
+            harshBraking = true;
+          });
+          
+          // Automatically clear the UI warning after a short delay
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) {
+              setState(() => harshBraking = false);
+            }
+          });
+        }
+      } else {
+        // Reset timing if magnitude drops below threshold
+        _harshEventStartTime = null;
       }
     });
   }
@@ -282,9 +323,11 @@ class _DrivingScreenState extends State<DrivingScreen> {
   Future<void> stopTrip() async {
     positionStream?.cancel();
     accelStream?.cancel();
+    _disposeCamera(); // Stop camera
 
     setState(() {
       tripRunning = false;
+      _detectedSign = ''; // Clear detection
     });
 
     tripScore = 100 - (harshBrakeCount * 2) - (overspeedCount * 2);
@@ -323,8 +366,7 @@ class _DrivingScreenState extends State<DrivingScreen> {
   void dispose() {
     positionStream?.cancel();
     accelStream?.cancel();
-    _cameraController?.stopImageStream();
-    _cameraController?.dispose();
+    _disposeCamera();
     _tfliteService.dispose();
     super.dispose();
   }

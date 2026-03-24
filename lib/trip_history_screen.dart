@@ -17,14 +17,37 @@ class TripHistoryScreen extends StatelessWidget {
           stream: FirebaseFirestore.instance
               .collection("trips")
               .where("userId", isEqualTo: user?.uid)
-              .orderBy("timestamp", descending: true)
               .snapshots(),
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  "Error loading trips: \n${snapshot.error}",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              );
+            }
+
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            final trips = snapshot.data!.docs;
+            // Client-side sorting to avoid requiring a composite index in Firestore
+            final trips = snapshot.data!.docs.toList();
+            trips.sort((a, b) {
+              final aData = a.data() as Map<String, dynamic>?;
+              final bData = b.data() as Map<String, dynamic>?;
+              
+              Timestamp? aTime = aData?['timestamp'] as Timestamp?;
+              Timestamp? bTime = bData?['timestamp'] as Timestamp?;
+              
+              if (aTime == null && bTime == null) return 0;
+              if (aTime == null) return 1;
+              if (bTime == null) return -1;
+              
+              return bTime.compareTo(aTime); // descending
+            });
 
             if (trips.isEmpty) {
               return const Center(
