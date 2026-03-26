@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'analytics_screen.dart';
 import 'driving_screen.dart';
 import 'trip_history_screen.dart';
 import 'profile_screen.dart';
@@ -20,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final screens = [
     const DrivingScreen(),
     const TripHistoryScreen(),
+    const AnalyticsScreen(),
     const ProfileScreen(),
   ];
 
@@ -33,6 +35,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: const Color(0xFF0B1220),
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
+        showUnselectedLabels: true,
 
         currentIndex: currentIndex,
 
@@ -52,6 +59,11 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: "Trips",
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.analytics),
+            label: "Analytics",
           ),
 
           BottomNavigationBarItem(
