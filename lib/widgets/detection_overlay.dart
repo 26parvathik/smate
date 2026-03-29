@@ -69,11 +69,19 @@ class DetectionOverlay extends CustomPainter {
   }
 
   Color _colorForClass(int index) {
+    if (index >= 0 && index <= 7) {
+      return Colors.lightBlueAccent;              // Speed Limit signs
+    }
     switch (index) {
-      case 0:  return Colors.greenAccent;        // Green Light
-      case 1:  return Colors.redAccent;           // Red Light
-      case 14: return Colors.red;                 // Stop
-      default: return Colors.lightBlueAccent;     // Speed Limit signs
+      case 8:  return Colors.amberAccent;         // Left Curve
+      case 9:  return Colors.amberAccent;         // Right Curve
+      case 10: return Colors.yellowAccent;        // Pedestrian Crossing
+      case 11: return Colors.redAccent;           // No Vehicles
+      case 12: return Colors.orangeAccent;        // School Ahead
+      case 13: return Colors.cyanAccent;          // Keep Right
+      case 14: return Colors.cyanAccent;          // Keep Left
+      case 15: return Colors.red;                 // Give Way
+      default: return Colors.white70;
     }
   }
 

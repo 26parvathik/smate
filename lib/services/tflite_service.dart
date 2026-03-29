@@ -19,43 +19,40 @@ class TfliteService {
   static const String modelPath = 'assets/models/best_float32.tflite';
 
   static const List<String> classLabels = [
-    'Green Light',
-    'Red Light',
-    'Speed Limit 10',
-    'Speed Limit 100',
-    'Speed Limit 110',
-    'Speed Limit 120',
-    'Speed Limit 20',
-    'Speed Limit 30',
-    'Speed Limit 40',
-    'Speed Limit 50',
-    'Speed Limit 60',
-    'Speed Limit 70',
-    'Speed Limit 80',
-    'Speed Limit 90',
-    'Stop',
+    'Speed Limit 20',       // 0
+    'Speed Limit 30',       // 1
+    'Speed Limit 50',       // 2
+    'Speed Limit 60',       // 3
+    'Speed Limit 70',       // 4
+    'Speed Limit 80',       // 5
+    'Speed Limit 100',      // 6
+    'Speed Limit 120',      // 7
+    'Left Curve',           // 8
+    'Right Curve',          // 9
+    'Pedestrian Crossing',  // 10
+    'No Vehicles',          // 11
+    'School Ahead',         // 12
+    'Keep Right',           // 13
+    'Keep Left',            // 14
+    'Give Way',             // 15
   ];
 
   /// Maps class label → speed value (km/h) for auto speed-limit.
   static const Map<int, double> speedLimitMap = {
-    2: 10,   // Speed Limit 10
-    3: 100,  // Speed Limit 100
-    4: 110,  // Speed Limit 110
-    5: 120,  // Speed Limit 120
-    6: 20,   // Speed Limit 20
-    7: 30,   // Speed Limit 30
-    8: 40,   // Speed Limit 40
-    9: 50,   // Speed Limit 50
-    10: 60,  // Speed Limit 60
-    11: 70,  // Speed Limit 70
-    12: 80,  // Speed Limit 80
-    13: 90,  // Speed Limit 90
+    0: 20,   // Speed Limit 20
+    1: 30,   // Speed Limit 30
+    2: 50,   // Speed Limit 50
+    3: 60,   // Speed Limit 60
+    4: 70,   // Speed Limit 70
+    5: 80,   // Speed Limit 80
+    6: 100,  // Speed Limit 100
+    7: 120,  // Speed Limit 120
   };
 
   static const int inputSize = 640;
   static const double confThreshold = 0.5;
   static const double iouThreshold = 0.5;
-  static const int numClasses = 15;
+  static const int numClasses = 16;
 
   Interpreter? _interpreter;
   bool _isLoaded = false;
@@ -104,10 +101,10 @@ class TfliteService {
     final inputData = preprocessImage(image);
     final inputTensor = inputData.reshape([1, inputSize, inputSize, 3]);
 
-    // 2. Allocate output: [1, 19, 8400]
+    // 2. Allocate output: [1, 20, 8400]  (4 bbox + 16 classes)
     final outputBuffer = List.generate(
       1,
-      (_) => List.generate(19, (_) => List.filled(8400, 0.0)),
+      (_) => List.generate(20, (_) => List.filled(8400, 0.0)),
     );
 
     // 3. Run
