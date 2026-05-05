@@ -108,7 +108,6 @@ class _DrivingScreenState extends State<DrivingScreen> {
   // Throttle detection to run max twice per second
   DateTime _lastDetectionTime = DateTime.fromMillisecondsSinceEpoch(0);
 
-  /// Called for every camera frame. Runs detection if not already processing and throttling allows.
   void _onCameraFrame(CameraImage cameraImage) {
     if (_isProcessing || !_tfliteService.isLoaded) return;
     
@@ -117,36 +116,45 @@ class _DrivingScreenState extends State<DrivingScreen> {
 
     _isProcessing = true;
 
-    // Convert CameraImage (YUV420) to img.Image (RGB)
-    final image = _convertCameraImage(cameraImage);
-    if (image == null) {
-      _isProcessing = false;
-      return;
-    }
+    try {
+      // Convert CameraImage (YUV420) to img.Image (RGB)
+      img.Image? image = _convertCameraImage(cameraImage);
+      if (image == null) return;
 
-    final detections = _tfliteService.detect(image);
-
-    if (!mounted) {
-      _isProcessing = false;
-      return;
-    }
-
-    setState(() {
-      if (detections.isNotEmpty) {
-        final best = detections.first;
-        _detectedSign = best.label;
-
-        // Auto-update speed limit if a speed-limit sign is detected
-        if (TfliteService.speedLimitMap.containsKey(best.classIndex)) {
-          speedLimit = TfliteService.speedLimitMap[best.classIndex]!;
+      // Rotate image to make it upright (traffic signs must not be rotated!)
+      if (_cameraController != null) {
+        final int sensorOrientation = _cameraController!.description.sensorOrientation;
+        if (sensorOrientation != 0) {
+          image = img.copyRotate(image, angle: sensorOrientation);
         }
-      } else {
-        _detectedSign = '';
       }
-    });
 
-    _lastDetectionTime = DateTime.now();
-    _isProcessing = false;
+      final detections = _tfliteService.detect(image);
+
+      if (!mounted) return;
+
+      setState(() {
+        if (detections.isNotEmpty) {
+          final best = detections.first;
+          _detectedSign = best.label;
+
+          // Auto-update speed limit if a speed-limit sign is detected
+          if (TfliteService.speedLimitMap.containsKey(best.classIndex)) {
+            speedLimit = TfliteService.speedLimitMap[best.classIndex]!;
+          }
+        } else {
+          _detectedSign = '';
+        }
+      });
+
+      _lastDetectionTime = DateTime.now();
+    } catch (e) {
+      debugPrint('Detection error: $e');
+    } finally {
+      if (mounted) {
+        _isProcessing = false;
+      }
+    }
   }
 
   /// Convert YUV420 camera image to [img.Image] in RGB.
@@ -164,8 +172,9 @@ class _DrivingScreenState extends State<DrivingScreen> {
       for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
           final int yIndex = y * yPlane.bytesPerRow + x;
+          final int uvPixelStride = uPlane.bytesPerPixel ?? 1;
           final int uvIndex =
-              (y ~/ 2) * uPlane.bytesPerRow + (x ~/ 2) * uPlane.bytesPerPixel!;
+              (y ~/ 2) * uPlane.bytesPerRow + (x ~/ 2) * uvPixelStride;
 
           final int yVal = yPlane.bytes[yIndex];
           final int uVal = uPlane.bytes[uvIndex];

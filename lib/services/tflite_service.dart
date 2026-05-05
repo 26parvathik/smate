@@ -50,8 +50,8 @@ class TfliteService {
   };
 
   static const int inputSize = 640;
-  static const double confThreshold = 0.5;
-  static const double iouThreshold = 0.5;
+  static const double confThreshold = 0.25;
+  static const double iouThreshold = 0.45;
   static const int numClasses = 16;
 
   Interpreter? _interpreter;
@@ -69,18 +69,32 @@ class TfliteService {
     }
   }
 
-  /// Preprocess an [img.Image] to a float32 input tensor [1, 640, 640, 3].
+  /// Preprocess an [img.Image] to a float32 input tensor [1, 640, 640, 3]
+  /// using letterbox padding to preserve aspect ratio (matches YOLOv8 training).
   Float32List preprocessImage(img.Image image) {
-    // Resize to 640x640 (direct resize)
-    final resized = img.copyResize(image, width: inputSize, height: inputSize);
+    // Calculate scale to fit within 640x640 preserving aspect ratio
+    final double scale = min(inputSize / image.width, inputSize / image.height);
+    final int newW = (image.width * scale).round();
+    final int newH = (image.height * scale).round();
 
+    final resized = img.copyResize(image, width: newW, height: newH);
+
+    // Create a gray-padded 640x640 canvas (114 is the YOLOv8 standard pad color)
+    final padded = img.Image(width: inputSize, height: inputSize);
+    img.fill(padded, color: img.ColorRgb8(114, 114, 114));
+
+    // Center the resized image on the padded canvas
+    final int offsetX = (inputSize - newW) ~/ 2;
+    final int offsetY = (inputSize - newH) ~/ 2;
+    img.compositeImage(padded, resized, dstX: offsetX, dstY: offsetY);
+
+    // Normalize to [0, 1]
     final input = Float32List(1 * inputSize * inputSize * 3);
     int pixelIndex = 0;
 
     for (int y = 0; y < inputSize; y++) {
       for (int x = 0; x < inputSize; x++) {
-        final pixel = resized.getPixel(x, y);
-        // img package uses RGB order by default — normalize to [0, 1]
+        final pixel = padded.getPixel(x, y);
         input[pixelIndex++] = pixel.r / 255.0;
         input[pixelIndex++] = pixel.g / 255.0;
         input[pixelIndex++] = pixel.b / 255.0;
@@ -97,6 +111,13 @@ class TfliteService {
     final origWidth = image.width;
     final origHeight = image.height;
 
+    // Compute letterbox parameters (must match preprocessImage logic)
+    final double scale = min(inputSize / origWidth, inputSize / origHeight);
+    final int newW = (origWidth * scale).round();
+    final int newH = (origHeight * scale).round();
+    final int offsetX = (inputSize - newW) ~/ 2;
+    final int offsetY = (inputSize - newH) ~/ 2;
+
     // 1. Preprocess
     final inputData = preprocessImage(image);
     final inputTensor = inputData.reshape([1, inputSize, inputSize, 3]);
@@ -111,7 +132,7 @@ class TfliteService {
     _interpreter!.run(inputTensor, outputBuffer);
 
     // 4. Post-process
-    final rawOutput = outputBuffer[0]; // shape [19][8400]
+    final rawOutput = outputBuffer[0]; // shape [20][8400]
 
     List<Detection> detections = [];
 
@@ -130,27 +151,29 @@ class TfliteService {
 
       if (bestScore < confThreshold) continue;
 
-      // Extract box (cx, cy, w, h) in 640-space
+      // Extract box (cx, cy, w, h) in 640-space (with letterbox padding)
       double cx = rawOutput[0][i];
       double cy = rawOutput[1][i];
       double w = rawOutput[2][i];
       double h = rawOutput[3][i];
 
-      // Convert to corner format
+      // Convert to corner format (still in 640-space)
       double x1 = cx - w / 2;
       double y1 = cy - h / 2;
       double x2 = cx + w / 2;
       double y2 = cy + h / 2;
 
-      // Scale back to original image size
-      double scaleX = origWidth / inputSize;
-      double scaleY = origHeight / inputSize;
+      // Remove letterbox padding offset, then scale back to original image size
+      double finalX1 = (x1 - offsetX) / scale;
+      double finalY1 = (y1 - offsetY) / scale;
+      double finalX2 = (x2 - offsetX) / scale;
+      double finalY2 = (y2 - offsetY) / scale;
 
       detections.add(Detection(
-        x1 * scaleX,
-        y1 * scaleY,
-        x2 * scaleX,
-        y2 * scaleY,
+        finalX1,
+        finalY1,
+        finalX2,
+        finalY2,
         bestClass,
         bestScore,
       ));

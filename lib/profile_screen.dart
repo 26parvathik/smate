@@ -37,20 +37,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    final data = doc.data() ?? <String, dynamic>{};
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final data = doc.data() ?? <String, dynamic>{};
 
-    if (!mounted) {
-      return;
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        name = (data['name'] as String?)?.trim() ?? 'Driver';
+        email = (data['email'] as String?)?.trim() ?? user.email ?? 'Not provided';
+        phone = (data['phone'] as String?)?.trim() ?? 'Not provided';
+        vehicle = (data['vehicle'] as String?)?.trim() ?? 'Not provided';
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        name = 'Driver';
+        email = user.email ?? 'Not provided';
+        phone = 'Not provided';
+        vehicle = 'Not provided';
+        isLoading = false;
+      });
     }
-
-    setState(() {
-      name = (data['name'] as String?)?.trim() ?? 'Driver';
-      email = (data['email'] as String?)?.trim() ?? user.email ?? 'Not provided';
-      phone = (data['phone'] as String?)?.trim() ?? 'Not provided';
-      vehicle = (data['vehicle'] as String?)?.trim() ?? 'Not provided';
-      isLoading = false;
-    });
   }
 
   Future<void> logout() async {
